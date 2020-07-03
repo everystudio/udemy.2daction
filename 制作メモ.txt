@@ -3,4 +3,38 @@
 
 Amazon Workspacesで作業したものがGithubに上げることができるかチェック
 
+キャラクターの画像を追加したら、ヒエラルキーの名前を「Player」に変更する。
 
+
+キャラクターのアニメーション
+
+キャラのInspectorにAnimatorのコンポーネントを追加
+
+Window/Animation/Animationを選択
+Window/Animation/Animator
+
+ヒエラルキーのPlayerを選択
+
+Animationビューの「To begin animation Player, create an Animation Clip」の下にあるCreateボタンを押す。
+
+フォルダの指定を促される。
+playerの画像フォルダにanimationフォルダを作る。
+animationフォルダ内に入り、idle.animファイル名を指定して、保存
+
+Animationビューのidleと書かれているプルダウンを選択
+Create New Clipを選択
+walk.animを保存（このとき、idle.animと同じディレクトリであると望ましい）
+
+walkアニメーションを編集
+赤い録画ボタンを押す（押せない場合はヒエラルキーのPlayerを選択してから再度トライ）
+
+0.2秒を選択
+インスペクターのSpriteRendererの画像をwalk02に変更
+
+0.4秒を選択
+インスペクターのSpriteRendererの画像をwalk03に変更
+
+1.0秒を選択
+インスペクターのSpriteRendererの画像をwalk01に変更
+
+再生ボタンをおして、キャラクターのアニメーションが正しく動いていることを確認
