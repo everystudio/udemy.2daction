@@ -1,10 +1,76 @@
 
-2020-07-03
+目次
 
-Amazon Workspacesで作業したものがGithubに上げることができるかチェック
+ステージを作る
+タイルマップで床を作成
 
-キャラクターの画像を追加したら、ヒエラルキーの名前を「Player」に変更する。
 
+キャラクターを追加する
+
+ヒエラルキーの＋ボタンをから追加します
+2D Object/Sprite を追加
+追加したスプライトのヒエラルキーの名前を「Player」に変更する。
+
+インスペクターのSprite の右側のボタンを押してスプライトを選択する
+walk_01のスプライトを選択
+（ドラッグアンドドロップでインスペクターに直接設定してもOK）
+
+同インスペクターに２つのコンポーネントを追加する
+RigidBody2D / CapusuleCollider2D
+
+RigidBody2Dの設定
+Constrains
+　FreezRotation zにチェックを入れる
+
+CapsuleCollider2Dの設定
+offset x=0 y=0.8
+size x=0.96 y=1.76
+
+マップの床の上にキャラを配置して、再生
+床の上に着地することを確認します。
+
+出来たら、次は左右ボタン(A/D)で左右に移動する処理を作る
+
+---------------------------------------------------------------
+
+PlayerController.csを作成
+
+移動処理を追加します。
+
+    public float move_speed = 3.0f;
+
+        float move_x = Input.GetAxis("Horizontal");
+        gameObject.GetComponent<Rigidbody2D>().velocity =
+            new Vector2(
+                move_x * move_speed,
+                gameObject.GetComponent<Rigidbody2D>().velocity.y
+                );
+
+再生して動くことを確認する
+
+------------------------------------------------
+移動方向に対して、キャラクターの向きを補正する
+
+PlayerControl.csに処理を追加
+
+        if (move_x != 0.0f)
+        {
+            float chara_dir = 1.0f;
+            if( move_x < 0.0f)
+            {
+                chara_dir = -1.0f;
+            }
+            gameObject.transform.localScale = new Vector3(
+                chara_dir,
+                1.0f,
+                1.0f
+                );
+        }
+
+二項演算子は使わない
+
+
+---------------------------------------------------------------
 
 キャラクターのアニメーション
 
@@ -38,3 +104,101 @@ walkアニメーションを編集
 インスペクターのSpriteRendererの画像をwalk01に変更
 
 再生ボタンをおして、キャラクターのアニメーションが正しく動いていることを確認
+
+
+------------------------------------------------
+アニメーションさせるためのパラメータを渡す
+
+スクリプト側
+        // 移動量に応じてアニメーションさせる
+        gameObject.GetComponent<Animator>().SetFloat("move" , Mathf.Abs(move_x));
+
+Animator側の設定
+
+ヒエラルキーのPlayerを選択
+
+１パラメータを追加
+AnimatorウインドのParametersを選択
+
++ボタンを押す（Float/Int/Bool/Triggerが選択できるボタン）
+Floatを追加
+名前を「move」で登録
+名前を間違えた場合は選択状態でもう一度名前を左クリックするとリネームが出来ます
+
+２．Make Transitionを作る
+
+Animatorウインドのidleを右クリクして、Make Transitionを選択
+矢印が引っ張れるようになるので、walkを選択して、２つのアニメーションをつなげる
+
+同様にwalkからidleへのMake Transitionも作成する
+
+3.各Transitionの設定を行う
+
+■ idle>walk へのTransitionを選択。
+インスペクターを見る
+
+Has Exit Timeのチェックをはずす
+Contidionsを追加（＋ボタンを押す）
+
+move / Greater / 0 を設定する
+
+■ walk>idle　へのTransitionを選択
+インスペクターを見る
+
+Has Exit Timeのチェックをはずす
+Conditionsを追加(＋ボタンを押す)
+
+move / Less / 0.1 を設定する
+
+動かしてアニメーションすることを確認
+
+
+------------------------------------------------------------------------
+
+ゴールに触るとステージクリアの処理を追加する
+
+ヒエラルキーに2D Object/Spriteを追加
+追加したスプライトのヒエラルキー上の名前をGoalに変更
+
+ゴールの位置を調整
+床の上に面するように配置します
+
+サンプルゲーム内では(3,-3.5,0)
+
+注！
+Sceneビュー内で配置したゴールが見えるけど、Gameビューで見えない場合があります
+これは、追加したスプライトのZ座標がカメラの描画範囲外に存在している可能性がある。
+
+他のオブジェクト（Playerなど）のZ座標と比較したり、Sceneビューの2Dモードを解除して
+Z軸方向にずれが生じてないかなどを確認しましょう。
+
+
+BoxCollider2Dを追加
+
+ゴール用の当たり判定を作りたいので、インスペクター上部にある
+Layerのプルダウンから、Add Layerを選択します
+
+(番号はなんでもいいけど、今回は)
+12番にgoalを追加します
+
+goalを追加したら、ヒエラルキーのGoalを選択する
+再びLayerのプルダウンを選択して、追加されたgoalを選びます
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
