@@ -44,6 +44,17 @@ public class PlayerControl : MonoBehaviour
 		{
             Debug.Log("jump");
 		}
-        
     }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        string layer_name = LayerMask.LayerToName(collision.gameObject.layer);
+        if (layer_name == "goal")
+        {
+            Debug.Log("goal!!!");
+            GameObject.Find("GameMain").SendMessage("OnGoal");
+        }
+    }
+
+
 }

@@ -184,18 +184,168 @@ Layerのプルダウンから、Add Layerを選択します
 goalを追加したら、ヒエラルキーのGoalを選択する
 再びLayerのプルダウンを選択して、追加されたgoalを選びます
 
+スクリプトを編集。PlayerControl.csに当たり判定の処理を追加する
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        string layer_name = LayerMask.LayerToName(collision.gameObject.layer);
+        if (layer_name == "goal")
+        {
+            Debug.Log("goal!!!");
+        }
+    }
+
+Collider2D系同士が接触すると当たり判定の処理が呼ばれる
+今回はLayerからゴールかどうかを判別することにします。
+
+実行して、ゴールに接触したときにデバッグログが表示されることを確認してください。
+
+GameMainにゴールした情報を渡したい
+
+GameMain.csスクリプトを追加する
+ヒエラルキー上に空のGameObjectを追加する
+追加したGameObjectの名前を「GameMain」に変更する←重要
+追加したGameObjectにGameMain.csをAddComponentする（貼り付ける）
+
+GameMain.csスクリプトを編集します。
+GameMain.csに以下のメソッドを追加する。
+    public void OnGoal()
+    {
+        Debug.Log("GameMain.OnGoal");
+    }
+
+このメソッドはGoalしたプレイヤーから呼び出す
+
+OnGoalメソッドを呼び出す処理をPlayerControl.csに追加します
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        string layer_name = LayerMask.LayerToName(collision.gameObject.layer);
+        if (layer_name == "goal")
+        {
+            Debug.Log("goal!!!");
+>           GameObject.Find("GameMain").SendMessage("OnGoal");
+        }
+    }
+
+GameMainという名前を持っているGameObjectに対して、OnGoalというメソッドを持っているコンポーネントが存在する場合、
+この処理で外部からメソッドを呼び出すことが出来ます。
+
+ここまで実装が出来たら、一度Unityを実行して、GameMain.OnGoalというログが表示されることを確認してください。
 
 
+Goalの演出を作る
 
+１．GOAL!!!というメッセージが表示される
+２．キャラクターが喜ぶモーションを行う
+３．一定時間経ったら次のステージへ移動する
 
+１．GOAL!!!というメッセージが表示される
 
+ヒエラルキーにUI>Textを追加します
 
+追加したtextのヒエラルキー上の名前を変更します「txtGoal」
+txtGoalのインスペクターを修正します
 
+RectTransform
+PosX = 0
+PosY = 0
+PosZ = 0
+Width = 250
+Height = 60
 
+Text
+Character
+ Font Size = 50
+Paragraph
+ Alignment 中央寄せになるように指定する
+Color お好みの色に変更してください
 
+GameMain.csでテキストの操作を行います
+ソースファイルを開いて、以下のコードを追加してください。
 
+using UnityEngine;
+using UnityEngine.UI;   // usingという記載のある直ぐ側にこの行の内容を追加してください
 
+StartメソッドやOnGoalメソッドは元からあるものを利用して加筆修正をしてください
 
+    void Start()
+    {
+        GameObject.Find("txtGoal").GetComponent<Text>().text = "";
+    }
+    public void OnGoal()
+    {
+        Debug.Log("GameMain.OnGoal");
+        GameObject.Find("txtGoal").GetComponent<Text>().text = "GOAL!!!";
+    }
+
+ここまで出来たら一度動かしてみましょう
+確認項目は以下２点
+１．起動直後に文字が消える
+２．ゴールに接触したら、「GOAL!!!」という文字が表示される
+
+問題がなければプレイヤーのアニメーションを追加します。
+
+キャラクターのアニメーション追加処理 ----------------------------
+
+ヒエラルキーのPlayerを選択
+選択された状態でAnimationビューを開く（確認する）
+
+idleと書かれているプルダウンを開き、[Create New Clip]を選択します
+walk.animやidle.animを保存している場所を指定して、「win.anim」という名前で保存します
+
+ここで確認
+追加がうまく行われた場合、Animatorの中にwinというステートが追加されます。
+必ず追加されたことを確認してください・
+
+正しく追加されたことを確認出来たら、アニメーションの作成を行います。
+ヒエラルキーのPlayerを選択
+Animationビューのアニメーションが書かれているプルダウンを選択。(手順通りの場合は、idleになっているはず)
+winに切り替える。
+赤い丸ボタンを押して、編集モードに切り替えます(タイムラインが赤くなっている状態が正解です)
+
+編集モードに入った状態で、タイムラインの選択された時間に注意をしながら、画像の差し替えを行います。
+画像の差し替え方は、Playerを選択した状態のインスペクターを編集することで反映されます
+今回は画像の差し替えをアニメーションとして利用するので、Sprite Rendererのスプライトを変更します
+
+0:00 win_01
+0:30 win_02
+1:00 win_03
+2:00 win_01
+
+初期状態だと1:00までのアニメーションになっていますが、スクロールして2:00が見えるように操作してください。
+
+4つの画像差し替えが出来たら、赤い丸を押して、編集ードを修了してください
+編集が終わったらアニメーションが正しく再生されるかを確認します。
+Animationビューの再生ボタンを押すとアニメーションが確認出来ます。
+
+喜んでいるアニメーションが確認出来たらOK
+
+Animationの設定ができた後は、Animatorの設定を行います。
+
+Animatorビューを表示します。
+何も表示がされない場合は、ヒエラルキーのPlayerを選択すると、編集したい内容が表示されます
+
+今回はidleモーションからwinモーションへ遷移する処理を実装します。
+
+Make Transitionでidleとwinを相互に接続します
+遷移用のパラメーターを追加します。
+今回はbool型の変数を使います。
+bool : 変数名[win]
+
+変数が追加できたら、各Transitionの設定を行います。
+
+idle>winの操作
+Has Exit Time のチェックをはずす
+Conditionsの追加
+win : true
+
+win>idleの操作
+Has Exit Time のチェックをはずす
+Conditionsの追加
+win : false
+
+アニメーションの処理はこれで完了。
 
 
 
