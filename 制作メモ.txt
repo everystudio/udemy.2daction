@@ -1,8 +1,18 @@
 
 目次
 
+最初にゲームを行うしーんを新規に作成します
+
+シーン名は[stage_1]としてください
+
 ステージを作る
 タイルマップで床を作成
+
+layer : groundを追加する
+
+タイルマップで地面を作るものはgroundのlayerに変更する
+
+
 
 
 キャラクターを追加する
@@ -292,26 +302,26 @@ StartメソッドやOnGoalメソッドは元からあるものを利用して加
 選択された状態でAnimationビューを開く（確認する）
 
 idleと書かれているプルダウンを開き、[Create New Clip]を選択します
-walk.animやidle.animを保存している場所を指定して、「win.anim」という名前で保存します
+walk.animやidle.animを保存している場所を指定して、「goal.anim」という名前で保存します
 
 ここで確認
-追加がうまく行われた場合、Animatorの中にwinというステートが追加されます。
+追加がうまく行われた場合、Animatorの中にgoalというステートが追加されます。
 必ず追加されたことを確認してください・
 
 正しく追加されたことを確認出来たら、アニメーションの作成を行います。
 ヒエラルキーのPlayerを選択
 Animationビューのアニメーションが書かれているプルダウンを選択。(手順通りの場合は、idleになっているはず)
-winに切り替える。
+goalに切り替える。
 赤い丸ボタンを押して、編集モードに切り替えます(タイムラインが赤くなっている状態が正解です)
 
 編集モードに入った状態で、タイムラインの選択された時間に注意をしながら、画像の差し替えを行います。
 画像の差し替え方は、Playerを選択した状態のインスペクターを編集することで反映されます
 今回は画像の差し替えをアニメーションとして利用するので、Sprite Rendererのスプライトを変更します
 
-0:00 win_01
-0:30 win_02
-1:00 win_03
-2:00 win_01
+0:00 goal_01
+0:30 goal_02
+1:00 goal_03
+2:00 goal_01
 
 初期状態だと1:00までのアニメーションになっていますが、スクロールして2:00が見えるように操作してください。
 
@@ -326,26 +336,241 @@ Animationの設定ができた後は、Animatorの設定を行います。
 Animatorビューを表示します。
 何も表示がされない場合は、ヒエラルキーのPlayerを選択すると、編集したい内容が表示されます
 
-今回はidleモーションからwinモーションへ遷移する処理を実装します。
+今回はidleモーションからgoalモーションへ遷移する処理を実装します。
 
-Make Transitionでidleとwinを相互に接続します
+Make Transitionでidleとgoalを相互に接続します
 遷移用のパラメーターを追加します。
 今回はbool型の変数を使います。
-bool : 変数名[win]
+bool : 変数名[goal]
 
 変数が追加できたら、各Transitionの設定を行います。
 
-idle>winの操作
+idle>goalの操作
 Has Exit Time のチェックをはずす
 Conditionsの追加
-win : true
+goal : true
 
-win>idleの操作
+goal>idleの操作
 Has Exit Time のチェックをはずす
 Conditionsの追加
-win : false
+goal : false
 
 アニメーションの処理はこれで完了。
+
+次はアニメーションをさせるためのプログラムを追加します。
+プログラムを追加する箇所は２つ
+
+１．Player自身がゴールしたかどうかを知るための変数
+２．Playerにゴールに到達したことを伝える処理
+
+１の実装
+PlayerControl.csに以下の変更を加えます
+
+メンバー変数の追加
+public bool is_goal;
+
+入力処理直後にゴール中かどうかでのパラメータの補正処理を入れる
+        float move_x = Input.GetAxis("Horizontal");
+        if (is_goal == true) {
+            move_x = 0.0f;
+        }
+
+アニメーターにパラメータを渡しているところに、is_goalのパラメータも追加する
+今回はSetBoolになっていることを注意してください
+        gameObject.GetComponent<Animator>().SetBool("goal", is_goal);
+
+
+２の実装
+
+GameMain.OnGoalメソッドに以下の処理を追加
+
+        GameObject.Find("Player").GetComponent<PlayerControl>().is_goal = true;
+
+実行して確認をしてみましょう
+
+確認項目は
+１．ゲーム開始時にPlayerキャラクラーが移動できる
+２．ゴールに到達するとプレイヤーキャラクターがgoalモーションを行う
+３．goalモーション中は左右での移動が出来ない
+
+この段階で、左右への移動のみのステージが出来ました
+ステージ１はこれで完成
+
+
+ステージ１が出来たら、次はステージ２を作成します。
+ステージ２のシーンはstage_1を複製して作成します。
+stage_1を選択して、Edit>Duplicateを選んでください（ショートカットCtrl+D or Cmd+D）
+
+名前が正しく入力されている場合、stage_2というシーンが作成されます。
+シーンが作成（複製）されたら、stage_2をダブルクリック(or 右クリック＞Open)でstage_2のシーンを開いてください
+
+stage_2が確認できたら、ステージデータを作成しましょう。
+
+Window>2D>Tile Paletteを開く
+
+ステージを作る
+動画参照
+
+今回は地面判定を行うためのレイヤーが必要になる
+
+AddLayerでレイヤーを追加
+
+// レイヤー[ground]を追加したら、Tilemapのレイヤーをgroundに変更してください
+
+ステージ２はジャンプをしないとゴールに到達できないステージになります。
+ということで、プレイヤーがジャンプを行える処理を実装します。
+
+ジャンプの処理を実装するには以下のような処理の追加が必要になります。
+
+プレイヤーが地面に接しているかどうかの判定（接地判定）
+キー入力による、プレイヤーの上方向への力を加える処理
+
+追加として、接地状態の場合、y軸方向の速度を０とする
+
+
+接地判定を追加する
+
+        LayerMask layer_mask = LayerMask.GetMask("ground");
+
+        RaycastHit2D hit_ground = Physics2D.CircleCast(
+            new Vector2(gameObject.transform.position.x, gameObject.transform.position.y),
+            0.5f,
+            new Vector2(0.0f, -1.0f),
+            0.51f,
+            layer_mask);
+
+        if( hit_ground.collider != null)
+        {
+            is_ground = true;
+        }
+        else
+        {
+            is_ground = false;
+        }
+
+Playerのis_groundが真の場合、地面に接している
+偽の場合、宙に浮いているかジャンプしているか
+
+ジャンプの処理を追加する
+
+        // ジャンプ処理
+        if(Input.GetButtonDown("Jump"))
+        {
+            gameObject.GetComponent<Rigidbody2D>().AddForce(
+                new Vector2(0.0f, 7.0f),
+                ForceMode2D.Impulse);
+        }
+
+これでジャンプ出来るけど、何度でも入力を受け付けて上方向への力が加わってしまう。
+地面からしかジャンプが出来ないようにするために、接地判定を利用する。
+
+且つ（&&）を利用してもいいし、if文の中にif文を入れてジャンプするための処理を追加してもOK
+
+        // ジャンプ処理
+        if (Input.GetButtonDown("Jump") && is_ground)
+        {
+            gameObject.GetComponent<Rigidbody2D>().AddForce(
+                new Vector2(0.0f, 7.0f),
+                ForceMode2D.Impulse);
+        }
+
+
+ジャンプできることを確認します
+
+うまくジャンプできたらゴールしてみましょう
+ゴール演出が再生されるとステージ２ほぼ完成！
+
+この段階で初めて、ステージが２つ出来たことになる。
+ステージ１をクリアした後に、次のステージへ移動するための処理を追加します。
+
+ステージの変更はシーン単位で行います。
+現在のステージはGameMainの中に予め設定しておきます
+
+GameMainにコードを追加
+
+メンバー変数
+    public int stage_id;
+
+メソッド
+
+    private IEnumerator NextStage(float _fDelaySeconds , int _iStageId)
+    {
+        yield return new WaitForSeconds(_fDelaySeconds);
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene(string.Format("stage_{0}", _iStageId));
+    }
+
+メソッドの呼び出しを行い処理を追加
+
+OnGoalメソッドの最後に次の命令を追加してください
+
+        StartCoroutine(NextStage( 3.0f , stage_id + 1 ));
+
+----------------------------------------------------------------
+
+ソースファイルの編集はここまで
+Unityでビルドエラーが出ていないことを確認してください。
+
+エラーが発生していない場合は、Unityでシーン「stage_1」を開いてください
+
+ヒエラルキーのGameMainを選択して、インスペクターの値を変更します
+
+stage_id : 1にします
+
+セットできたら、Build Settingを開いてstage_1,stage_2をScenes in Buildに追加します
+Build Settingsの開き方
+
+ショートカットの場合、Ctrl+Shift+B(Cmd+Shift+B)で開くことが出来ます
+メニューから開く場合は、File>Build Settingsから開くことが出来ます
+
+Scenes In Build にドラッグアンドドロップでstage_1,stage_2を追加します。
+
+追加出来たらBuild Settingsは閉じてOK！
+
+ここまでの作業が完了したら、stage_1をクリアして、stage_2が開始されることを確認しましょう。
+
+stage_2のstage_idの設定を行っていない場合は、stage_2をクリアするとstage_1に戻ります
+こちらはstage_2のGameMainに適切なstage_idをセットしていないため、このようになります。
+
+最終ステージのみ特殊な処理が必要になりますが、現在はこれでOK
+
+もろもろの確認が終わったら、stage_2のstage_idをセットしてください
+stage_idのセットが終わると、シーン「stage_2」を複製してstage_3を作成します
+
+-----------------------------------------------------------------------------
+
+stage_3の複製が行えたら、stage_3のシーンを開いて編集を行いましょう。
+
+
+ステージ３は鍵を取得して、ロックを解除してからゴールを目指すステージにします
+
+まずは完成図を参考にして、タイルマップでブロックを作成します。
+
+マップが作成できたら、Layerにkeyを追加します
+　→ゲームによってはこの追加するレイヤーはitemのような汎用的な名前をつけることがあります。
+
+レイヤーが追加できたら、鍵とロックを追加します
+
+鍵(Key)のスプライトと、ロック(Lock)のスプライトをそれぞれシーンビューの中にドラッグアンドドロップしてください
+配置場所は図を参考に合わせてください。
+KeyはLayerをkeyに変更してください
+
+画像の追加が行えたら、それぞれにBoxCollider2Dを追加してください。
+
+この時点で一度実行して、KeyやLockを通り過ぎることが出来ないことを確認します。
+
+問題がなければ、次の処理を実装していきます。
+
+１．Keyと接触すると鍵を取得
+２．鍵を取得した状態でLockに接触するとLockが消える
+３．Lockを消すタイミングでKeyを１つ消耗する
+
+
+
+
+
+
+
 
 
 
