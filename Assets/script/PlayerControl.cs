@@ -91,6 +91,10 @@ public class PlayerControl : MonoBehaviour
             Debug.Log("goal!!!");
             GameObject.Find("GameMain").SendMessage("OnGoal");
         }
+        else if( layer_name == "enemy")
+        {
+            Debug.Log("hit enemy");
+        }
     }
 
 

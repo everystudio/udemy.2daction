@@ -33,7 +33,7 @@ Constrains
 　FreezRotation zにチェックを入れる
 
 CapsuleCollider2Dの設定
-offset x=0 y=0.8
+offset x=0 y=0
 size x=0.96 y=1.76
 
 マップの床の上にキャラを配置して、再生
@@ -246,12 +246,17 @@ GameMainという名前を持っているGameObjectに対して、OnGoalとい�
 
 Goalの演出を作る
 
-１．GOAL!!!というメッセージが表示される
+１．GOAL!!!というメッセージを表示する
 ２．キャラクターが喜ぶモーションを行う
 ３．一定時間経ったら次のステージへ移動する
 
-１．GOAL!!!というメッセージが表示される
+１．GOAL!!!というメッセージを表示する
 
+新しいシーンを作成
+シーンの名前はui
+シーンを作成したら、BuildSettingsに登録しておいてください
+
+カメラを削除
 ヒエラルキーにUI>Textを追加します
 
 追加したtextのヒエラルキー上の名前を変更します「txtGoal」
@@ -265,23 +270,25 @@ Width = 250
 Height = 60
 
 Text
+ text = ""入力している文字を消してください
 Character
  Font Size = 50
 Paragraph
  Alignment 中央寄せになるように指定する
 Color お好みの色に変更してください
 
-GameMain.csでテキストの操作を行います
+GameMain.csでuiのシーンを呼び出して、テキストを演出時に利用します
 ソースファイルを開いて、以下のコードを追加してください。
 
 using UnityEngine;
 using UnityEngine.UI;   // usingという記載のある直ぐ側にこの行の内容を追加してください
+using UnityEngine.SceneManagement;
 
 StartメソッドやOnGoalメソッドは元からあるものを利用して加筆修正をしてください
 
     void Start()
     {
-        GameObject.Find("txtGoal").GetComponent<Text>().text = "";
+        SceneManager.LoadScene("ui", LoadSceneMode.Additive);
     }
     public void OnGoal()
     {
@@ -291,7 +298,7 @@ StartメソッドやOnGoalメソッドは元からあるものを利用して加
 
 ここまで出来たら一度動かしてみましょう
 確認項目は以下２点
-１．起動直後に文字が消える
+１．起動直後にuiのシーンがヒエラルキーに追加される
 ２．ゴールに接触したら、「GOAL!!!」という文字が表示される
 
 問題がなければプレイヤーのアニメーションを追加します。
@@ -546,7 +553,7 @@ stage_3の複製が行えたら、stage_3のシーンを開いて編集を行い
 
 まずは完成図を参考にして、タイルマップでブロックを作成します。
 
-マップが作成できたら、Layerにkeyを追加します
+マップが作成できたら、Layerにkey,lockを追加します
 　→ゲームによってはこの追加するレイヤーはitemのような汎用的な名前をつけることがあります。
 
 レイヤーが追加できたら、鍵とロックを追加します
@@ -554,6 +561,7 @@ stage_3の複製が行えたら、stage_3のシーンを開いて編集を行い
 鍵(Key)のスプライトと、ロック(Lock)のスプライトをそれぞれシーンビューの中にドラッグアンドドロップしてください
 配置場所は図を参考に合わせてください。
 KeyはLayerをkeyに変更してください
+LockはLayerをlockに変更してください
 
 画像の追加が行えたら、それぞれにBoxCollider2Dを追加してください。
 
@@ -564,6 +572,216 @@ KeyはLayerをkeyに変更してください
 １．Keyと接触すると鍵を取得
 ２．鍵を取得した状態でLockに接触するとLockが消える
 ３．Lockを消すタイミングでKeyを１つ消耗する
+
+
+KeyとPlayerがあたったかどうかを検出する処理を追加
+
+Key.csスクリプトを追加します。
+スクリプトの中には当たり判定処理を追加する必要がある。以下のメソッドを追記してください
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if( LayerMask.LayerToName( collision.gameObject.layer ) == "player")
+        {
+            Debug.Log(collision.gameObject.name);
+        }
+    }
+
+スクリプトの追加が出来たら、一度動かして確認してみましょう。
+2D用のメソッド名や引数がCollision2Dになっていることをしっかりと確認してください。
+
+プレイヤーが鍵に触れるとログを表示するのが確認出来たら、当たり判定内の処理を次のように変更してください
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if( LayerMask.LayerToName( collision.gameObject.layer ) == "player")
+        {
+            GameObject.Find("GameMain").SendMessage("AddKey");
+            Destroy(gameObject);
+        }
+    }
+
+更新した処理で、GameMainにAddKeyというメソッドを呼び出す処理と、プレイヤーに当たると鍵が消滅する処理を追加出来ました。
+スクリプトを修正したら、動かしてみて、鍵が消えることを確認しましょう。
+
+鍵が消えることが確認できたら、次はGameMain.csの修正を行います
+
+メンバー変数とメソッドを追加します
+
+追加するメンバー変数
+    public int key_num;
+
+追加するメソッド
+    public void AddKey()
+    {
+        key_num += 1;
+        Debug.Log(key_num);
+    }
+
+確認のため、鍵の数を追加したタイミングで現在の所持数を表示するデバッグログを追加して一度動かしてみましょう。
+（publicの変数なので、インスペクターで確認しても大丈夫です）
+
+これで鍵の個数が増えたことが確認出来ました。
+
+ここで一旦ゲームの内容から少し離れて、UIを作って見ましょう。
+現在鍵の個数をゲーム内で確認する方法がありませんので、所持数の表示を追加したいと思います。
+
+-----------------------------------------------------------------
+
+uiシーンの編集を行います。
+uiのシーンを開いて、以下の作業を行ってください。
+メニューのGameObject>UI>Imageを追加します
+
+AnchorPresetで左上寄せを選択
+Pivot x=0 y=1
+PosX=0 PosY=0
+width=100 height=50
+Colorを黒の半透明
+
+追加したImageを右クリックして、UI>Image
+AnchorPresetの左寄せ上下合わせを選択
+Pivot x=0 y=0.5
+Top 2 Bottom 2
+width=50
+Source Imageに鍵の画像をセットする
+Preserve Aspectにチェックを入れる
+
+追加したImageを右クリックして、UI>Text
+AnchorPresetの全合わせを選択
+Left52 Right 2 Top 2 Bottom 2
+Alignment を中心・中心にセット
+font size 32
+Colorを白
+テキストを x0
+
+追加したTextのヒエラルキー上の名前を変更します
+Text → txtKeyNum に変更してください
+
+ここまでの作業を行うと、画面上に鍵の個数を知ることが出来るようになっているはず
+
+ではスクリプトで表示する個数の制御を行いたいと思います。
+
+stage_3シーンを開いて、GameMain.csの編集に戻ります
+
+AddKeyのメソッドの中にUIの制御処理を追加します。
+
+    public void AddKey()
+    {
+        key_num += 1;
+        Debug.Log(key_num);
+        GameObject.Find("txtKeyNum").GetComponent<Text>().text = string.Format("x{0}", key_num);
+    }
+
+こちらのコードが、鍵の個数を表示しているテキストの更新を行う命令になります。
+追加が出来たら、ゲームを動かして確認してみましょう。
+鍵を取得して、x1になれば成功です。
+
+正しく動いたことが確認できたら、次は鍵を１つ以上持った状態で錠前に接触すると、錠前が消える処理を追加します。
+追加するスクリプトは２箇所。１つはGameMain.csともう１つは錠前用のLock.csが必要になります
+
+GameMain.csに以下のメソッドを追加します
+
+    public bool OpenLock()
+    {
+        if( 0 < key_num)
+        {
+            key_num -= 1;
+            GameObject.Find("txtKeyNum").GetComponent<Text>().text = string.Format("x{0}", key_num);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+錠前用のスクリプトLock.csを追加します
+当たり判定処理として、以下のメソッドを追加します。
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (LayerMask.LayerToName(collision.gameObject.layer) == "player")
+        {
+            if( GameObject.Find("GameMain").GetComponent<GameMain>().OpenLock())
+            {
+                Destroy(gameObject);
+            }
+        }
+    }
+
+スクリプトの修正が完了したら、ゲームを実際に動かして鍵を取得して、錠前にふれると消えることを確認してみましょう。
+※デバッグとして、鍵を持っていない状態で錠前が消えないことも確認しましょう。
+
+クリア演出がまで出来たらOK
+この時点でstage_4のシーンを用意していないのでエラーが表示されます。
+
+Scene 'stage_4' couldn't be loaded because it has not been added to the build settings or the AssetBundle has not been loaded.
+To add a scene to the build settings use the menu File->Build Settings...
+
+これはビルドセッティングにstage_4というシーンがないため起こります。
+特に気にしなくても問題なし！
+
+ということで、次のステージを作りたいと思います。
+
+stage_3を複製してstage_4を作ります。
+シーンファイルstage_3を右クリックしてDuplicateを選択
+名前が正しく入力していると、stage_4というシーンが作られます。
+
+stage_4が作られたら、ダブルクリックをして、シーンを開いてください
+(右クリック>Openでもかまいません)
+
+GameMainのインスペクター上のstage_idを4にする
+
+まずはTile mapを使って、画像を参考に、ステージを作ってください
+このステージでは鍵とロックは利用しません。
+（削除するか、非アクティブにして画面から消しておきましょう）
+
+今回のステージの肝になる、敵キャラを追加します。
+enemy_1というスプライトをシーンビューにドラッグアンドドロップしてください
+
+
+ヒエラルキーにenemy_1が追加できたら、選択してインスペクターを表示してください
+
+Layerに[enemy]を追加して、レイヤーの設定を変更してください
+Layer:enemy
+
+Add Componentで以下２つのコンポーネントを追加してください
+・RigidBody2D
+・CapsuleCollider2D
+
+RigidBody2DのConstrainsを変更します
+FreezRotation Zにチェックを入れてください
+
+CapsuleCollider2DのSizeを変更します
+x=0.9 y=0.9
+
+追加が出来たら、敵キャラの動きを実装します
+スクリプト「Enemy1.cs」を追加してください
+
+以下のコードを追加して、敵が動くようになるのを確認します。
+
+    void FixedUpdate()
+    {
+        gameObject.GetComponent<Rigidbody2D>().velocity = new Vector2(
+            -0.5f,
+            gameObject.GetComponent<Rigidbody2D>().velocity.y);
+    }
+
+今回の追加では、左に向かって移動するだけの敵が追加されます。
+スクリプトが編集できたら、ヒエラルキーのenemy_1にスクリプトを追加して、ゲームを実行してみてください
+
+敵キャラが左に向かって歩いていることが確認できれば成功です。
+
+次はプレイヤーが敵キャラにぶつかった判定を追加します。
+
+------------------------------------------------------
+
+次回
+16日の13時ぐらいから
+
+プレイヤーがダメージを受ける処理
+ゲームオーバーになる処理→リスタートは同じステージから行います。
+
 
 
 
