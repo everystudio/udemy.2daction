@@ -776,6 +776,24 @@ x=0.9 y=0.9
 
 ------------------------------------------------------
 
+プレイヤーがダメージを受ける処理
+１．PlayerControl.csに敵と当たった状態を検出する
+２．ダメージを受けた演出・処理をする
+３．GameMainに知らせる
+
+
+１．PlayerControl.csに敵と当たった状態を検出する
+
+OnCollisionEnter2Dに以下の処理を追加
+
+else if( layer_name == "enemy")
+{
+    Debug.Log("hit enemy");
+}
+
+
+
+
 次回
 16日の13時ぐらいから
 
@@ -786,7 +804,7 @@ x=0.9 y=0.9
 
 
 
-
+https://scratch.mit.edu/users/sakanaking/
 
 
 
