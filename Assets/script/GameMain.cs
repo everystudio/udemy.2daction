@@ -18,9 +18,17 @@ public class GameMain : MonoBehaviour
 	public void OnGoal()
 	{
 		Debug.Log("GameMain.OnGoal");
-		GameObject.Find("txtGoal").GetComponent<Text>().text = "GOAL!!!";
+		GameObject.Find("txtMessage").GetComponent<Text>().text = "GOAL!!!";
 		GameObject.Find("Player").GetComponent<PlayerControl>().is_goal = true;
-		StartCoroutine(NextStage(3.0f, stage_id + 1));
+		StartCoroutine(LoadStage(3.0f, stage_id + 1));
+	}
+
+	public void OnHitEnemy()
+	{
+		Debug.Log("GameMain.OnHitEnemy");
+		GameObject.Find("txtMessage").GetComponent<Text>().text = "GAME OVER!!!";
+		GameObject.Find("Player").GetComponent<Animator>().SetBool("dead",true);
+		StartCoroutine(LoadStage(3.0f, stage_id));
 	}
 
 	public void AddKey()
@@ -44,7 +52,7 @@ public class GameMain : MonoBehaviour
 		}
 	}
 
-	private IEnumerator NextStage(float _fDelaySeconds , int _iStageId)
+	private IEnumerator LoadStage(float _fDelaySeconds , int _iStageId)
 	{
 		yield return new WaitForSeconds(_fDelaySeconds);
 

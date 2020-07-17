@@ -10,11 +10,19 @@ public class Enemy1 : MonoBehaviour
         
     }
 
+    void Update()
+    {
+        if( gameObject.transform.position.y < -7.0f)
+        {
+            Destroy(gameObject);
+        }
+    }
+
     // Update is called once per frame
     void FixedUpdate()
     {
         gameObject.GetComponent<Rigidbody2D>().velocity = new Vector2(
-            -0.5f,
+            -1.0f,
             gameObject.GetComponent<Rigidbody2D>().velocity.y);
     }
 }

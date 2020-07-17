@@ -259,14 +259,14 @@ Goalの演出を作る
 カメラを削除
 ヒエラルキーにUI>Textを追加します
 
-追加したtextのヒエラルキー上の名前を変更します「txtGoal」
-txtGoalのインスペクターを修正します
+追加したtextのヒエラルキー上の名前を変更します「txtMessage」
+txtMessageのインスペクターを修正します
 
 RectTransform
 PosX = 0
 PosY = 0
 PosZ = 0
-Width = 250
+Width = 400
 Height = 60
 
 Text
@@ -293,7 +293,7 @@ StartメソッドやOnGoalメソッドは元からあるものを利用して加
     public void OnGoal()
     {
         Debug.Log("GameMain.OnGoal");
-        GameObject.Find("txtGoal").GetComponent<Text>().text = "GOAL!!!";
+        GameObject.Find("txtMessage").GetComponent<Text>().text = "GOAL!!!";
     }
 
 ここまで出来たら一度動かしてみましょう
@@ -500,7 +500,7 @@ GameMainにコードを追加
 
 メソッド
 
-    private IEnumerator NextStage(float _fDelaySeconds , int _iStageId)
+    private IEnumerator LoadStage(float _fDelaySeconds , int _iStageId)
     {
         yield return new WaitForSeconds(_fDelaySeconds);
 
@@ -511,7 +511,7 @@ GameMainにコードを追加
 
 OnGoalメソッドの最後に次の命令を追加してください
 
-        StartCoroutine(NextStage( 3.0f , stage_id + 1 ));
+        StartCoroutine(LoadStage( 3.0f , stage_id + 1 ));
 
 ----------------------------------------------------------------
 
@@ -778,9 +778,8 @@ x=0.9 y=0.9
 
 プレイヤーがダメージを受ける処理
 １．PlayerControl.csに敵と当たった状態を検出する
-２．ダメージを受けた演出・処理をする
+２．やられたときの演出をする
 ３．GameMainに知らせる
-
 
 １．PlayerControl.csに敵と当たった状態を検出する
 
@@ -789,23 +788,130 @@ OnCollisionEnter2Dに以下の処理を追加
 else if( layer_name == "enemy")
 {
     Debug.Log("hit enemy");
+    GameObject.Find("GameMain").SendMessage("OnGoal");
+}
+
+2.やられたときの受けた演出を作る
+ヒエラルキーのプレイヤーを選択
+Animatorウィンドで変数を追加する
+Parameters
+ 型：bool
+ 名前：dead
+
+Animationウィンドウ
+Create New Clipを選択
+deadという名前のアニメーションを新規に作成します
+追加したアニメーションを選択した状態で、インスペクターの設定を変更します。
+Loop Timeのチェックを外してください
+
+Make Transition
+idle > deadへの方向のみ
+
+Transitionの設定
+idle > dead
+ Has Exit Time のチェックをはずす
+ Conditionsにdeadが真の状態で遷移するように設定
+アニメーションのブレンド部分を変更する。動画参照
+
+アニメーションの編集をします。
+赤い丸ボタンを押して、編集モードに切り替えます。
+１秒のアニメーションでやられてしまう演出を行う
+詳しくは動画で！
+
+
+３．GameMainに知らせる
+GameMainに以下のメソッドを追加してください
+
+    public void OnHitEnemy()
+    {
+        Debug.Log("GameMain.OnHitEnemy");
+        GameObject.Find("txtMessage").GetComponent<Text>().text = "GAME OVER!!!";
+        GameObject.Find("Player").GetComponent<Animator>().SetBool("dead",true);
+        StartCoroutine(LoadStage(3.0f, stage_id));
+    }
+
+敵が一定間隔ごとに出現する処理を作ります。
+
+Prefabという機能を利用します。
+
+Prefabとは、シーン内のオブジェクトを複製することが出来る機能のことです。
+
+１．enemyのプレファブ化
+２．一定間隔ごとにenemyを複製するプログラムの実装
+３．シーン内に設定を行い、敵が複製されるのを確認する
+４．enemyの退場処理の追加
+
+１．enemyのプレファブ化
+シーン内に存在する、enemyをドラッグアンドドロップで、プロジェクトビューの中に放り込みます
+アイコンが青い箱のようなものになれば成功です。
+シーン内のプレファブは不要になるので、削除してください。
+
+２．一定間隔ごとにenemyを複製するプログラムの実装
+EnemyGenerator.csを追加します。
+以下のプログラムを作成してください。
+
+public class EnemyGenerator : MonoBehaviour
+{
+    private float m_fTime;
+    public float m_fInterval = 5.0f;
+    public GameObject m_prefEnemy;
+
+    private void Start()
+    {
+        m_fTime = 0.0f;
+    }
+
+    private void Update()
+    {
+        m_fTime += Time.deltaTime;
+        if(m_fInterval < m_fTime)
+        {
+            Instantiate(m_prefEnemy, gameObject.transform.position, gameObject.transform.rotation);
+            m_fTime -= m_fInterval;
+        }       
+    }
 }
 
 
+３．シーン内に設定を行い、敵が複製されるのを確認する
+
+ヒエラルキーに空のゲームオブジェクトを追加します
+名前を[EnemyGenerator]に変更してください
+名前の変更が終わったら、同ゲームオブジェクトにEnemyGerator.csをアタッチしてください。
+
+Positionを設定（4,6,0）
+※ｘｙ座標は好きな位置で構いませんが、ｚ座標は必ず０にしてください
+
+インスペクターの設定を行います。
+Pref Enemyに、プレファブ化を行ったenemyをドラッグアンドドロップしてください。
+※超重要
+
+ここまでの設定が行えたら、ゲームを動かして、敵が一定間隔で生成されることを確認してください。
 
 
-次回
-16日の13時ぐらいから
+４．enemyの退場処理の追加
+敵が画面外に落下した後、放ったらかしにしていると、いつまでも存在し続けてしまうので、
+ここでは座標が一定以下に到達した場合、敵を削除する処理を追加します。
 
-プレイヤーがダメージを受ける処理
-ゲームオーバーになる処理→リスタートは同じステージから行います。
+Enemy1.csに以下のコードを追加してください。
+
+    void Update()
+    {
+        if( gameObject.transform.position.y < -7.0f)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+
+
 
 さらに次のステージ(stage_5)は敵が、赤ノコノコのような行動パターンを行う敵キャラの挙動を実装。
 
 
 
 https://scratch.mit.edu/users/sakanaking/
-
+Unityやプログラム・プログラマーに関する質問などをコメントで受け付けています。お気軽にご相談ください
 
 
 

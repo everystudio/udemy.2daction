@@ -6,6 +6,7 @@ public class PlayerControl : MonoBehaviour
 {
     public float move_speed;
     public bool is_goal;
+    public bool is_dead;
     public bool is_ground;      // true:接地 false:浮いている
 
 
@@ -20,9 +21,6 @@ public class PlayerControl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //Debug.Log(LayerMask.NameToLayer("goal"));
-
-
         LayerMask layer_mask = LayerMask.GetMask("ground");
 
         RaycastHit2D hit_ground = Physics2D.CircleCast(
@@ -40,9 +38,6 @@ public class PlayerControl : MonoBehaviour
         {
             is_ground = false;
         }
-
-
-
 
         float move_x = Input.GetAxis("Horizontal");
         if (is_goal == true) {
@@ -81,6 +76,12 @@ public class PlayerControl : MonoBehaviour
                 new Vector2(0.0f, 7.0f),
                 ForceMode2D.Impulse);
         }
+
+        if (gameObject.transform.position.y < -7.0f && is_dead == false)
+        {
+            GameObject.Find("GameMain").SendMessage("OnHitEnemy");
+        }
+
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -94,6 +95,7 @@ public class PlayerControl : MonoBehaviour
         else if( layer_name == "enemy")
         {
             Debug.Log("hit enemy");
+            GameObject.Find("GameMain").SendMessage("OnHitEnemy");
         }
     }
 
